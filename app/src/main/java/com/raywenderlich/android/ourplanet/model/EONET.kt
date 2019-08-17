@@ -31,6 +31,7 @@
 package com.raywenderlich.android.ourplanet.model
 
 import io.reactivex.Observable
+import io.reactivex.rxkotlin.Observables
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -53,19 +54,28 @@ object EONET {
     return eonet.fetchCategories()
   }
 
-  fun fetchEvents(forLastDays: Int = 360): Observable<List<EOEvent>> {
-    val openEvents = events(forLastDays, false)
-    val closedEvents = events(forLastDays, true)
-    return openEvents.concatWith(closedEvents)
+  fun fetchEvents(category: EOCategory, forLastDays: Int = 360): Observable<List<EOEvent>> {
+    val openEvents = events(forLastDays, false, category.endpoint)
+    val closedEvents = events(forLastDays, true, category.endpoint)
+    return Observable.merge(openEvents, closedEvents)
   }
 
-  private fun events(forLastDays: Int, closed: Boolean): Observable<List<EOEvent>> {
+  private fun events(forLastDays: Int, closed: Boolean, endPoint: String):
+          Observable<List<EOEvent>> {
+
     val status = if (closed) "closed" else "open"
-    return eonet.fetchEvents(forLastDays, status)
+    return eonet.fetchEvents(endPoint, forLastDays, status)
             .map { response ->
               val events = response.events
               events.mapNotNull { EOEvent.fromJson(it) }
             }
+  }
+
+  fun filterEventsForCategory(events: List<EOEvent>, category: EOCategory): List<EOEvent> {
+    return events.filter { event ->
+      event.categories.contains(category.id) &&
+              !category.events.map { it.id }.contains(event.id)
+    }.sortedWith(EOEvent.compareByDates)
   }
 
 }

@@ -35,6 +35,7 @@ import android.arch.lifecycle.ViewModel
 import android.util.Log
 import com.raywenderlich.android.ourplanet.model.EOCategory
 import com.raywenderlich.android.ourplanet.model.EONET
+import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.Observables
@@ -57,21 +58,32 @@ class CategoriesViewModel : ViewModel() {
                 }
                 .share()
 
-        val downloadEvents = EONET.fetchEvents()
+        val downloadEvents = Observable.merge(eoCategories
+                .flatMap { categories ->
+                    Observable.fromIterable(
+                            categories.map { category ->
+                                EONET.fetchEvents(category)
+                            }
+                    )
+                }, 2)
 
-        val updatedCategories = Observables
-                .combineLatest(eoCategories, downloadEvents) {
-                    categoryResponse, eventResponse ->
-
-                    categoryResponse.map { category ->
+        val updatedCategories = eoCategories.flatMap { categories ->
+            downloadEvents.scan(categories) { updated, events ->
+                updated.map { category ->
+                    val eventsForCategory =
+                            EONET.filterEventsForCategory(events, category)
+                    if (eventsForCategory.isNotEmpty()) {
                         val cat = category.copy()
-                        cat.events.addAll(eventResponse.filter { event ->
-                            cat.id in event.categories
+                        cat.events.addAll(eventsForCategory.filter {
+                            it.closeDate != null
                         })
                         cat
+                    } else {
+                        category
                     }
-
                 }
+            }
+        }
 
         eoCategories.concatWith(updatedCategories)
                 .subscribeOn(Schedulers.io())
