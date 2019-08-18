@@ -6,6 +6,16 @@
   android:layout_height="match_parent"
   tools:context=".CategoriesActivity">
 
+  <ProgressBar
+      android:id="@+id/progressBar"
+      style="@android:style/Widget.Material.ProgressBar.Horizontal"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:indeterminate="true"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toTopOf="parent" />
+
   <android.support.v7.widget.RecyclerView
     android:id="@+id/recyclerView"
     android:layout_width="0dp"
@@ -13,6 +23,6 @@
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent" />
+    app:layout_constraintTop_toBottomOf="@id/progressBar" />
 
 </android.support.constraint.ConstraintLayout>

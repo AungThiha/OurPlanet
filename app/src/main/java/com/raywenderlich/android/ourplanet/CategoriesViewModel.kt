@@ -47,6 +47,8 @@ class CategoriesViewModel : ViewModel() {
 
     val categoriesLiveData = MutableLiveData<List<EOCategory>>()
 
+    val progressBarLiveData = MutableLiveData<Boolean>()
+
     private val disposables = CompositeDisposable()
 
     fun startDownload() {
@@ -56,7 +58,6 @@ class CategoriesViewModel : ViewModel() {
                     val categories = response.categories
                     categories.mapNotNull { EOCategory.fromJson(it) }
                 }
-                .share()
 
         val downloadEvents = Observable.merge(eoCategories
                 .flatMap { categories ->
@@ -83,11 +84,16 @@ class CategoriesViewModel : ViewModel() {
                     }
                 }
             }
+        }.doOnComplete {
+            progressBarLiveData.postValue(false)
         }
 
         eoCategories.concatWith(updatedCategories)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
+                .doOnSubscribe {
+                    progressBarLiveData.postValue(true)
+                }
                 .subscribeBy(
                         onNext = {
                             categoriesLiveData.value = it
