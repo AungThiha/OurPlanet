@@ -38,4 +38,6 @@ Episode 31 is an introduction
 
 Episode 32 - 34 is in [HelloRxKotlin](https://github.com/AungThiha/HelloRxKotlin)
 
-Episode 35 - 36 is in this repo 
+Episode 35 - 39 is in this repo 
+
+Episode 40 is conclusion
